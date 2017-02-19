@@ -7,6 +7,9 @@ A terminal interface for Slack.
  - Ctrl-c - select channels list
     - Use the arrow keys (or j/k) and enter to select a channel
     - Use '/' to search for a channel (enter to submit search)
+ - Ctrl-g - select groups list (private channels)
+    - Use the arrow keys (or j/k) and enter to select a group
+    - Use '/' to search for a group (enter to submit search)
  - Ctrl-u - select users list
     - Use the arrow keys (or j/k) and enter to select a channel
     - Use '/' to search for a user (enter to submit search)

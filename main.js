@@ -196,6 +196,24 @@ slack.getChannels((error, response, data) => {
   components.screen.render();
 });
 
+// set the group list to the groups returned from slack
+slack.getGroups((error, response, data) => {
+  if (error || response.statusCode !== 200) {
+    console.log( // eslint-disable-line no-console
+      'Error: ', error, response && response.statusCode
+    );
+    return;
+  }
+
+  const groupData = JSON.parse(data);
+  groups = groupData.groups.filter(group => !group.is_archived);
+
+  components.groupList.setItems(
+    groups.map(slackGroup => slackGroup.name)
+  );
+  components.screen.render();
+});
+
 // event handler when user selects a channel
 function updateMessages(data, markFn) {
   components.chatWindow.deleteTop(); // remove loading message
@@ -282,6 +300,26 @@ components.channelList.on('select', (data) => {
     // get the previous messages of the channel and display them
     slack.getChannelHistory(currentChannelId, (histError, histResponse, channelHistoryData) => {
       updateMessages(JSON.parse(channelHistoryData), slack.markChannel);
+    });
+  });
+});
+
+components.groupList.on('select', (data) => {
+  const groupName = data.content;
+
+  // a channel was selected
+  components.mainWindowTitle.setContent(`{bold}${groupName}{/bold}`);
+  components.chatWindow.setContent('Getting messages...');
+  components.screen.render();
+
+  // join the selected channel
+  slack.joinGroup(groupName, (error, response, groupData) => {
+    const parsedGroupData = JSON.parse(groupData);
+    currentChannelId = parsedGroupData.group.id;
+
+    // get the previous messages of the channel and display them
+    slack.getChannelHistory(currentChannelId, (histError, histResponse, groupHistoryData) => {
+      updateMessages(JSON.parse(groupHistoryData), slack.markChannel);
     });
   });
 });

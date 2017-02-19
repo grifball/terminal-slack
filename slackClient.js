@@ -67,21 +67,70 @@ module.exports = {
     });
   },
   getChannelHistory(id, callback) {
-    slackRequest('channels.history', {
-      channel: id,
-    }, (error, response, data) => {
+    if (id.startsWith('G')) {
+      // ID is for a group and not a channel
+      slackRequest('groups.history', {
+        channel: id,
+      }, (error, response, data) => {
+        if (callback) {
+          callback(error, response, data);
+        }
+      });
+    } else {
+      // ID is hopefully for a channel
+      slackRequest('channels.history', {
+        channel: id,
+      }, (error, response, data) => {
+        if (callback) {
+          callback(error, response, data);
+        }
+      });
+    }
+  },
+  markChannel(id, timestamp, callback) {
+    if (id.startsWith('G')) {
+      // ID is for a group and not a channel
+      slackRequest('groups.mark', {
+        channel: id,
+        ts: timestamp,
+      }, (error, response, data) => {
+        if (callback) {
+          callback(error, response, data);
+        }
+      });
+    } else {
+      slackRequest('channels.mark', {
+        channel: id,
+        ts: timestamp,
+      }, (error, response, data) => {
+        if (callback) {
+          callback(error, response, data);
+        }
+      });
+    }
+  },
+  getGroups(callback) {
+    slackRequest('groups.list', {}, (error, response, data) => {
       if (callback) {
         callback(error, response, data);
       }
     });
   },
-  markChannel(id, timestamp, callback) {
-    slackRequest('channels.mark', {
-      channel: id,
-      ts: timestamp,
-    }, (error, response, data) => {
+  // Modified channel.join: request group list and loop to find id for name
+  joinGroup(name, callback) {
+    slackRequest('groups.list', {}, (error, response, data) => {
       if (callback) {
-        callback(error, response, data);
+        if (data) {
+          groupList = JSON.parse(data);
+          groupList.groups.forEach((group) => {
+            if (group.name === name) {
+              groupList.group = group;
+              callback(error, response, JSON.stringify(groupList));
+            }
+          });
+        } else {
+          callback(error, response, data);
+        }
       }
     });
   },
