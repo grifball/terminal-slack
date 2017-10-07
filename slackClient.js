@@ -66,32 +66,32 @@ module.exports = {
       }
     });
   },
-  getChannelHistory(id, callback) {
-    if (id.startsWith('G')) {
+  getChannelHistory(channel, qs, callback) {
+    if (channel.id.startsWith('G')) {
       // ID is for a group and not a channel
-      slackRequest('groups.history', {
-        channel: id,
-      }, (error, response, data) => {
+      slackRequest('groups.history', 
+				qs
+			, (error, response, data) => {
         if (callback) {
           callback(error, response, data);
         }
       });
     } else {
       // ID is hopefully for a channel
-      slackRequest('channels.history', {
-        channel: id,
-      }, (error, response, data) => {
+      slackRequest('channels.history', 
+				qs
+			, (error, response, data) => {
         if (callback) {
           callback(error, response, data);
         }
       });
     }
   },
-  markChannel(id, timestamp, callback) {
-    if (id.startsWith('G')) {
+  markChannel(channel, timestamp, callback) {
+    if (channel.id.startsWith('G')) {
       // ID is for a group and not a channel
       slackRequest('groups.mark', {
-        channel: id,
+        channel: channel.id,
         ts: timestamp,
       }, (error, response, data) => {
         if (callback) {
@@ -100,7 +100,7 @@ module.exports = {
       });
     } else {
       slackRequest('channels.mark', {
-        channel: id,
+        channel: channel.id,
         ts: timestamp,
       }, (error, response, data) => {
         if (callback) {
@@ -141,27 +141,27 @@ module.exports = {
       }
     });
   },
-  openIm(id, callback) {
+  openIm(channel, callback) {
     slackRequest('im.open', {
-      user: id,
+      user: channel.id,
     }, (error, response, data) => {
       if (callback) {
         callback(error, response, data);
       }
     });
   },
-  getImHistory(id, callback) {
+  getImHistory(channel, callback) {
     slackRequest('im.history', {
-      channel: id,
+      channel: channel.id,
     }, (error, response, data) => {
       if (callback) {
         callback(error, response, data);
       }
     });
   },
-  markIm(id, timestamp, callback) {
+  markIm(channel, timestamp, callback) {
     slackRequest('im.mark', {
-      channel: id,
+      channel: channel.id,
       ts: timestamp,
     }, (error, response, data) => {
       if (callback) {
