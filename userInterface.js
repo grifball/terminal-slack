@@ -1,4 +1,5 @@
 const blessed = require('blessed');
+const fs = require('fs');
 
 const keyBindings = {};
 
@@ -55,6 +56,11 @@ module.exports = {
       alwaysScroll: true,
       tags: true,
     });
+		const scrollBottom=function(win){
+			return function(){
+				win.setScroll(win.getScrollHeight()-1);
+			}
+		}(chatWindow)
 
     const messageInput = blessed.textbox({
       width: '90%',
@@ -277,19 +283,6 @@ module.exports = {
       }
     });
 
-    // scrolling in chat window
-    chatWindow.on('keypress', (ch, key) => {
-      if (key.name === 'up') {
-        chatWindow.scroll(-1);
-        screen.render();
-        return;
-      }
-      if (key.name === 'down') {
-        chatWindow.scroll(1);
-        screen.render();
-        return;
-      }
-    });
 
     // event handlers for focus and blur of inputs
     const onFocus = (component) => {
@@ -325,6 +318,7 @@ module.exports = {
       mainWindow,
       mainWindowTitle,
       chatWindow,
+			scrollBottom,
       messageInput,
     };
   },
