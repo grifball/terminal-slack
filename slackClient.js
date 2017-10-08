@@ -80,6 +80,7 @@ module.exports = {
       // ID is for a direct message
       return 'im';
     }
+    return null;
   },
   getChannelHistory(channel, qs, callback) {
     fs.appendFileSync('error_log.txt', `${channel.id}\n`);
@@ -115,7 +116,7 @@ module.exports = {
     slackRequest('groups.list', {}, (error, response, data) => {
       if (callback) {
         if (data) {
-          groupList = JSON.parse(data);
+          const groupList = JSON.parse(data);
           groupList.groups.forEach((group) => {
             if (group.name === name) {
               groupList.group = group;

@@ -1,5 +1,4 @@
 const blessed = require('blessed');
-const fs = require('fs');
 
 const keyBindings = {};
 
@@ -56,11 +55,9 @@ module.exports = {
       alwaysScroll: true,
       tags: true,
     });
-    const scrollBottom = (function (win) {
-      return function () {
-        win.setScroll(win.getScrollHeight() - 1);
-      };
-    }(chatWindow));
+    const scrollBottom = () => {
+      chatWindow.setScroll(chatWindow.getScrollHeight() - 1);
+    };
 
     const messageInput = blessed.textbox({
       width: '90%',

@@ -213,7 +213,7 @@ slack.getGroups((error, response, data) => {
   }
 
   const groupData = JSON.parse(data);
-  groups = groupData.groups.filter(group => !group.is_archived);
+  const groups = groupData.groups.filter(group => !group.is_archived);
 
   components.groupList.setItems(
     groups.map(slackGroup => slackGroup.name)
@@ -280,17 +280,17 @@ components.userList.on('select', (data) => {
   // get user's id
   const user = users.find(potentialUser => potentialUser.name === username);
 
-  slack.openIm(user, (error, response, data) => {
-    const dataObj = JSON.parse(data);
-    currentChannel = dataObj.channel;
+  slack.openIm(user, (error, response, openData) => {
+    const openDataObj = JSON.parse(openData);
+    currentChannel = openDataObj.channel;
     currentChannel.name = `User: ${username}`;
 
     // load im history
-    slack.getImHistory(currentChannel, (histError, histResponse, data) => {
-      const dataObj = JSON.parse(data);
-      if (dataObj.messages.length > 0) {
-        currentChannelOldest = dataObj.messages[dataObj.messages.length - 1].ts;
-        updateMessages(dataObj, slack.markIm);
+    slack.getImHistory(currentChannel, (histError, histResponse, histData) => {
+      const histDataObj = JSON.parse(histData);
+      if (histDataObj.messages.length > 0) {
+        currentChannelOldest = histDataObj.messages[histDataObj.messages.length - 1].ts;
+        updateMessages(histDataObj, slack.markIm);
       }
     });
   });
@@ -310,11 +310,13 @@ components.channelList.on('select', (data) => {
     currentChannel = parsedChannelData.channel;
 
     // get the previous messages of the channel and display them
-    slack.getChannelHistory(currentChannel, { channel: currentChannel.id }, (error, response, data) => {
-      const dataObj = JSON.parse(data);
-      currentChannelOldest = dataObj.messages[dataObj.messages.length - 1].ts;
-      updateMessages(JSON.parse(data), slack.markChannel);
-    });
+    slack.getChannelHistory(currentChannel,
+      { channel: currentChannel.id },
+      (histError, histResponse, histData) => {
+        const histDataObj = JSON.parse(histData);
+        currentChannelOldest = histDataObj.messages[histDataObj.messages.length - 1].ts;
+        updateMessages(JSON.parse(histData), slack.markChannel);
+      });
   });
 });
 
@@ -332,17 +334,19 @@ components.groupList.on('select', (data) => {
     currentChannel = parsedGroupData.group;
 
     // get the previous messages of the channel and display them
-    slack.getChannelHistory(currentChannel, { channel: currentChannel.id }, (error, response, data) => {
-      const dataObj = JSON.parse(data);
-      currentChannelOldest = dataObj.messages[dataObj.messages.length - 1].ts;
-      updateMessages(dataObj, slack.markChannel);
-    });
+    slack.getChannelHistory(currentChannel,
+      { channel: currentChannel.id },
+      (histError, histResponse, histData) => {
+        const histDataObj = JSON.parse(histData);
+        currentChannelOldest = histDataObj.messages[histDataObj.messages.length - 1].ts;
+        updateMessages(histDataObj, slack.markChannel);
+      });
   });
 });
 // scrolling in chat window
 components.chatWindow.on('keypress', (ch, key) => {
   // only retrieve if we use an up motion after already being at the top
-  const couldRetrieve = components.chatWindow.getScroll() == 0;
+  const couldRetrieve = components.chatWindow.getScroll() === 0;
   let scrollChange = 0;
   if (key.name === 'end') {
     scrollChange = components.chatWindow.getScrollHeight();
@@ -362,7 +366,7 @@ components.chatWindow.on('keypress', (ch, key) => {
   if (key.name === 'down') {
     scrollChange = 1;
   }
-  if (scrollChange != 0) {
+  if (scrollChange !== 0) {
     // if we scrolled during that keypress
     components.chatWindow.scroll(scrollChange);
     if (components.chatWindow.getScroll() >= components.chatWindow.getScrollHeight() - 1) {
@@ -373,7 +377,7 @@ components.chatWindow.on('keypress', (ch, key) => {
       // we moved up, go into history scrolling mode
       components.mainWindowTitle.setContent(`${currentChannel.name} - free scrolling`);
       lockToBottom = false;
-      if (couldRetrieve && components.chatWindow.getScroll() == 0) {
+      if (couldRetrieve && components.chatWindow.getScroll() === 0) {
         slack.getChannelHistory(currentChannel, {
           channel: currentChannel.id,
           latest: currentChannelOldest,
