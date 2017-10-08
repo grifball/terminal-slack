@@ -1,9 +1,5 @@
-const fs = require('fs');
-const request = require('request');
 const notifier = require('node-notifier');
 const path = require('path');
-
-const TOKEN = process.env.SLACK_TOKEN;
 
 const ui = require('./userInterface.js');
 const slack = require('./slackClient.js');
@@ -31,7 +27,7 @@ const getNextId = (() => {
 })();
 
 // we'll be able to lock the scroller to new messages with this boolean
-var lockToBottom=true
+let lockToBottom = true;
 
 // handles the reply to say that a message was successfully sent
 function handleSentConfirmation(message) {
@@ -40,10 +36,11 @@ function handleSentConfirmation(message) {
   const keys = Object.keys(lines);
   let line;
   let i;
+  let num = '';
   for (i = keys.length - 1; i >= 0; i -= 1) {
     line = lines[keys[i]].split('(pending - ');
-		var num=line.pop()
-		num=num.substring(0,num.length-1)
+    num = line.pop();
+    num = num.substring(0, num.length - 1);
     if (parseInt(num, 10) === message.reply_to) {
       components.chatWindow.deleteLine(parseInt(keys[i], 10));
 
@@ -55,8 +52,7 @@ function handleSentConfirmation(message) {
       break;
     }
   }
-	if (lockToBottom)
-		components.scrollBottom();
+  if (lockToBottom) { components.scrollBottom(); }
   components.screen.render();
 }
 
@@ -120,8 +116,7 @@ function handleNewMessage(message) {
   components.chatWindow.insertBottom(
     `{bold}${username}{/bold}: ${formatMessageMentions(message.text)}`
   );
-	if (lockToBottom)
-		components.scrollBottom()
+  if (lockToBottom) { components.scrollBottom(); }
   components.screen.render();
 }
 
@@ -253,12 +248,12 @@ function updateMessages(data, markFn) {
           }
         }
       }
-      return { ts:message.ts, text: message.text, username: username || UNKNOWN_USER_NAME };
+      return { ts: message.ts, text: message.text, username: username || UNKNOWN_USER_NAME };
     })
     .forEach((message) => {
       // add messages to window
       components.chatWindow.unshiftLine(
-        `{bold}${message.username}[${new Date(message.ts*1000).toISOString().slice(0, 16)}]{/bold}: ${formatMessageMentions(message.text)}`
+        `{bold}${message.username}[${new Date(message.ts * 1000).toISOString().slice(0, 16)}]{/bold}: ${formatMessageMentions(message.text)}`
       );
     });
 
@@ -269,8 +264,8 @@ function updateMessages(data, markFn) {
 
   // reset messageInput and give focus
   components.messageInput.clearValue();
-  //components.chatWindow.scrollTo(components.chatWindow.getLines().length * SCROLL_PER_MESSAGE);
-  //components.messageInput.focus();
+  // components.chatWindow.scrollTo(components.chatWindow.getLines().length * SCROLL_PER_MESSAGE);
+  // components.messageInput.focus();
   components.screen.render();
 }
 
@@ -288,15 +283,15 @@ components.userList.on('select', (data) => {
   slack.openIm(user, (error, response, data) => {
     const dataObj = JSON.parse(data);
     currentChannel = dataObj.channel;
-    currentChannel.name="User: "+username;
+    currentChannel.name = `User: ${username}`;
 
     // load im history
     slack.getImHistory(currentChannel, (histError, histResponse, data) => {
-			var dataObj=JSON.parse(data)
-			if (dataObj.messages.length>0){
-				currentChannelOldest = dataObj.messages[dataObj.messages.length-1].ts
-				updateMessages(dataObj, slack.markIm);
-			}
+      const dataObj = JSON.parse(data);
+      if (dataObj.messages.length > 0) {
+        currentChannelOldest = dataObj.messages[dataObj.messages.length - 1].ts;
+        updateMessages(dataObj, slack.markIm);
+      }
     });
   });
 });
@@ -315,11 +310,11 @@ components.channelList.on('select', (data) => {
     currentChannel = parsedChannelData.channel;
 
     // get the previous messages of the channel and display them
-		slack.getChannelHistory(currentChannel, {channel:currentChannel.id},(error, response, data) => {
-			var dataObj=JSON.parse(data)
-			currentChannelOldest = dataObj.messages[dataObj.messages.length-1].ts
+    slack.getChannelHistory(currentChannel, { channel: currentChannel.id }, (error, response, data) => {
+      const dataObj = JSON.parse(data);
+      currentChannelOldest = dataObj.messages[dataObj.messages.length - 1].ts;
       updateMessages(JSON.parse(data), slack.markChannel);
-		})
+    });
   });
 });
 
@@ -337,60 +332,60 @@ components.groupList.on('select', (data) => {
     currentChannel = parsedGroupData.group;
 
     // get the previous messages of the channel and display them
-    slack.getChannelHistory(currentChannel, {channel:currentChannel.id}, (error, response, data) => {
-			var dataObj=JSON.parse(data)
-			currentChannelOldest = dataObj.messages[dataObj.messages.length-1].ts
+    slack.getChannelHistory(currentChannel, { channel: currentChannel.id }, (error, response, data) => {
+      const dataObj = JSON.parse(data);
+      currentChannelOldest = dataObj.messages[dataObj.messages.length - 1].ts;
       updateMessages(dataObj, slack.markChannel);
     });
   });
 });
 // scrolling in chat window
 components.chatWindow.on('keypress', (ch, key) => {
-	// only retrieve if we use an up motion after already being at the top
-	var couldRetrieve=components.chatWindow.getScroll()==0
-	var scrollChange=0;
-	if (key.name === 'end') {
-		scrollChange=components.chatWindow.getScrollHeight();
-	}
-	if (key.name === 'home') {
-		scrollChange=-components.chatWindow.getScrollHeight();
-	}
-	if (key.name === 'pageup') {
-		scrollChange=-Math.round(components.mainWindowTitle.height/2);
-	}
-	if (key.name === 'pagedown') {
-		scrollChange=Math.round(components.mainWindowTitle.height/2);
-	}
-	if (key.name === 'up') {
-		scrollChange=-1;
-	}
-	if (key.name === 'down') {
-		scrollChange=1;
-	}
-	if (scrollChange!=0){
-		// if we scrolled during that keypress
-		components.chatWindow.scroll(scrollChange);
-		if (components.chatWindow.getScroll()>=components.chatWindow.getScrollHeight()-1){
-			// we're at the bottom now, lock for new messages
-			components.mainWindowTitle.setContent(currentChannel.name+" - scroll on message");
-			lockToBottom=true
-		}else{
-			// we moved up, go into history scrolling mode
-			components.mainWindowTitle.setContent(currentChannel.name+" - free scrolling");
-			lockToBottom=false
-			if (couldRetrieve&&components.chatWindow.getScroll()==0){
-				slack.getChannelHistory(currentChannel, {
-						channel:currentChannel.id,
-						latest:currentChannelOldest
-					},(error, response, data) => {
-					var dataObj=JSON.parse(data)
-					if (dataObj.messages.length>0){
-						currentChannelOldest = dataObj.messages[dataObj.messages.length-1].ts
-						updateMessages(JSON.parse(data), slack.markChannel);
-					}
-				})
-			}
-		}
-	}
-	components.screen.render();
+  // only retrieve if we use an up motion after already being at the top
+  const couldRetrieve = components.chatWindow.getScroll() == 0;
+  let scrollChange = 0;
+  if (key.name === 'end') {
+    scrollChange = components.chatWindow.getScrollHeight();
+  }
+  if (key.name === 'home') {
+    scrollChange = -components.chatWindow.getScrollHeight();
+  }
+  if (key.name === 'pageup') {
+    scrollChange = -Math.round(components.mainWindowTitle.height / 2);
+  }
+  if (key.name === 'pagedown') {
+    scrollChange = Math.round(components.mainWindowTitle.height / 2);
+  }
+  if (key.name === 'up') {
+    scrollChange = -1;
+  }
+  if (key.name === 'down') {
+    scrollChange = 1;
+  }
+  if (scrollChange != 0) {
+    // if we scrolled during that keypress
+    components.chatWindow.scroll(scrollChange);
+    if (components.chatWindow.getScroll() >= components.chatWindow.getScrollHeight() - 1) {
+      // we're at the bottom now, lock for new messages
+      components.mainWindowTitle.setContent(`${currentChannel.name} - scroll on message`);
+      lockToBottom = true;
+    } else {
+      // we moved up, go into history scrolling mode
+      components.mainWindowTitle.setContent(`${currentChannel.name} - free scrolling`);
+      lockToBottom = false;
+      if (couldRetrieve && components.chatWindow.getScroll() == 0) {
+        slack.getChannelHistory(currentChannel, {
+          channel: currentChannel.id,
+          latest: currentChannelOldest,
+        }, (error, response, data) => {
+          const dataObj = JSON.parse(data);
+          if (dataObj.messages.length > 0) {
+            currentChannelOldest = dataObj.messages[dataObj.messages.length - 1].ts;
+            updateMessages(JSON.parse(data), slack.markChannel);
+          }
+        });
+      }
+    }
+  }
+  components.screen.render();
 });

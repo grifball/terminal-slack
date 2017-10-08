@@ -56,11 +56,11 @@ module.exports = {
       alwaysScroll: true,
       tags: true,
     });
-		const scrollBottom=function(win){
-			return function(){
-				win.setScroll(win.getScrollHeight()-1);
-			}
-		}(chatWindow)
+    const scrollBottom = (function (win) {
+      return function () {
+        win.setScroll(win.getScrollHeight() - 1);
+      };
+    }(chatWindow));
 
     const messageInput = blessed.textbox({
       width: '90%',
@@ -318,7 +318,7 @@ module.exports = {
       mainWindow,
       mainWindowTitle,
       chatWindow,
-			scrollBottom,
+      scrollBottom,
       messageInput,
     };
   },
