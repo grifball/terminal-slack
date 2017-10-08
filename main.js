@@ -113,7 +113,7 @@ function handleNewMessage(message) {
     return;
   }
 
-  components.chatWindow.insertBottom(
+  components.chatWindow.pushLine(
     `{bold}${username}{/bold}: ${formatMessageMentions(message.text)}`
   );
   if (lockToBottom) { components.scrollBottom(); }
