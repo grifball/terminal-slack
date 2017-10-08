@@ -42,7 +42,9 @@ function handleSentConfirmation(message) {
   let i;
   for (i = keys.length - 1; i >= 0; i -= 1) {
     line = lines[keys[i]].split('(pending - ');
-    if (parseInt(line.pop()[0], 10) === message.reply_to) {
+		var num=line.pop()
+		num=num.substring(0,num.length-1)
+    if (parseInt(num, 10) === message.reply_to) {
       components.chatWindow.deleteLine(parseInt(keys[i], 10));
 
       if (message.ok) {
@@ -281,15 +283,20 @@ components.userList.on('select', (data) => {
   components.screen.render();
 
   // get user's id
-  const userId = users.find(potentialUser => potentialUser.name === username).id;
+  const user = users.find(potentialUser => potentialUser.name === username);
 
-  slack.openIm(userId, (error, response, imData) => {
-    const parsedImData = JSON.parse(imData);
-    currentChannel = parsedImData.channel;
+  slack.openIm(user, (error, response, data) => {
+    const dataObj = JSON.parse(data);
+    currentChannel = dataObj.channel;
+    currentChannel.name="User: "+username;
 
     // load im history
-    slack.getImHistory(currentChannel, (histError, histResponse, imHistoryData) => {
-      updateMessages(JSON.parse(imHistoryData), slack.markIm);
+    slack.getImHistory(currentChannel, (histError, histResponse, data) => {
+			var dataObj=JSON.parse(data)
+			if (dataObj.messages.length>0){
+				currentChannelOldest = dataObj.messages[dataObj.messages.length-1].ts
+				updateMessages(dataObj, slack.markIm);
+			}
     });
   });
 });
@@ -363,7 +370,7 @@ components.chatWindow.on('keypress', (ch, key) => {
 	if (scrollChange!=0){
 		// if we scrolled during that keypress
 		components.chatWindow.scroll(scrollChange);
-		if (components.chatWindow.getScroll()==components.chatWindow.getScrollHeight()-1){
+		if (components.chatWindow.getScroll()>=components.chatWindow.getScrollHeight()-1){
 			// we're at the bottom now, lock for new messages
 			components.mainWindowTitle.setContent(currentChannel.name+" - scroll on message");
 			lockToBottom=true

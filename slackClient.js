@@ -32,7 +32,8 @@ function slackRequest(endpoint, query, callback) {
     const parsedData = JSON.parse(data);
     if (!parsedData.ok) {
       // can't see console.logs with blessed
-      fs.writeFileSync('error_log.txt', `Error: ${parsedData.error}`);
+			qs.token="" // scrub token
+      fs.writeFileSync('error_log.txt', `Error: ${data} on request ${endpoint} - ${JSON.stringify(qs)}`);
       process.exit(1);
     }
 
@@ -66,48 +67,41 @@ module.exports = {
       }
     });
   },
-  getChannelHistory(channel, qs, callback) {
+	getEndpoint(channel){
     if (channel.id.startsWith('G')) {
-      // ID is for a group and not a channel
-      slackRequest('groups.history', 
-				qs
-			, (error, response, data) => {
-        if (callback) {
-          callback(error, response, data);
-        }
-      });
-    } else {
-      // ID is hopefully for a channel
-      slackRequest('channels.history', 
-				qs
-			, (error, response, data) => {
-        if (callback) {
-          callback(error, response, data);
-        }
-      });
-    }
+      // ID is for a group
+			return 'groups'
+		}else
+    if (channel.id.startsWith('C')) {
+      // ID is for a channel
+			return 'channels'
+		}else
+    if (channel.id.startsWith('D')) {
+      // ID is for a direct message
+			return 'im'
+		}
+	},
+  getChannelHistory(channel, qs, callback) {
+		fs.appendFileSync('error_log.txt', channel.id+"\n");
+		var endpoint=module.exports.getEndpoint(channel)+'.history'
+		slackRequest(endpoint, 
+			qs
+		, (error, response, data) => {
+			if (callback) {
+				callback(error, response, data);
+			}
+		});
   },
   markChannel(channel, timestamp, callback) {
-    if (channel.id.startsWith('G')) {
-      // ID is for a group and not a channel
-      slackRequest('groups.mark', {
-        channel: channel.id,
-        ts: timestamp,
-      }, (error, response, data) => {
-        if (callback) {
-          callback(error, response, data);
-        }
-      });
-    } else {
-      slackRequest('channels.mark', {
-        channel: channel.id,
-        ts: timestamp,
-      }, (error, response, data) => {
-        if (callback) {
-          callback(error, response, data);
-        }
-      });
-    }
+		var endpoint=module.exports.getEndpoint(channel)+'.mark'
+		slackRequest(endpoint, {
+			channel: channel.id,
+			ts: timestamp,
+		}, (error, response, data) => {
+			if (callback) {
+				callback(error, response, data);
+			}
+		});
   },
   getGroups(callback) {
     slackRequest('groups.list', {}, (error, response, data) => {
