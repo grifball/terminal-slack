@@ -56,7 +56,7 @@ module.exports = {
       tags: true,
     });
     const scrollBottom = () => {
-      chatWindow.setScroll(chatWindow.getScrollHeight() - 1);
+      chatWindow.setScroll(chatWindow.getScrollHeight());
     };
 
     const messageInput = blessed.textbox({

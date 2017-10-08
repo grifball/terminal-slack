@@ -291,6 +291,9 @@ components.userList.on('select', (data) => {
       if (histDataObj.messages.length > 0) {
         currentChannelOldest = histDataObj.messages[histDataObj.messages.length - 1].ts;
         updateMessages(histDataObj, slack.markIm);
+        components.scrollBottom();
+        lockToBottom = true;
+        components.screen.render();
       }
     });
   });
@@ -316,6 +319,9 @@ components.channelList.on('select', (data) => {
         const histDataObj = JSON.parse(histData);
         currentChannelOldest = histDataObj.messages[histDataObj.messages.length - 1].ts;
         updateMessages(JSON.parse(histData), slack.markChannel);
+        components.scrollBottom();
+        lockToBottom = true;
+        components.screen.render();
       });
   });
 });
@@ -340,6 +346,9 @@ components.groupList.on('select', (data) => {
         const histDataObj = JSON.parse(histData);
         currentChannelOldest = histDataObj.messages[histDataObj.messages.length - 1].ts;
         updateMessages(histDataObj, slack.markChannel);
+        components.scrollBottom();
+        lockToBottom = true;
+        components.screen.render();
       });
   });
 });
