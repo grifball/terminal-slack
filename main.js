@@ -364,10 +364,10 @@ components.chatWindow.on('keypress', (ch, key) => {
     scrollChange = -components.chatWindow.getScrollHeight();
   }
   if (key.name === 'pageup') {
-    scrollChange = -Math.round(components.mainWindowTitle.height / 2);
+    scrollChange = -Math.round(components.chatWindow.height / 2);
   }
   if (key.name === 'pagedown') {
-    scrollChange = Math.round(components.mainWindowTitle.height / 2);
+    scrollChange = Math.round(components.chatWindow.height / 2);
   }
   if (key.name === 'up') {
     scrollChange = -1;
