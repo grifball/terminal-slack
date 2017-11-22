@@ -5,7 +5,6 @@ const keyBindings = {};
 module.exports = {
   init() {
     const screen = blessed.screen({
-      autopadding: true,
       smartCSR: true,
       title: 'Slack',
     });
@@ -20,18 +19,15 @@ module.exports = {
     });
 
     const sideBar = blessed.box({
-      width: '30%',
-      height: '100%',
+      width: '100%',
+      height: '30%',
     });
 
     const mainWindow = blessed.box({
-      width: '70%',
-      height: '100%',
-      left: '30%',
+      width: '100%',
+      height: '70%',
+      top: '30%',
       // scrollable: true,
-      border: {
-        type: 'line',
-      },
       style: {
         border: {
           fg: '#888',
@@ -40,14 +36,15 @@ module.exports = {
     });
 
     const mainWindowTitle = blessed.text({
-      width: '90%',
+      height: '10%',
+      width: '100%',
       tags: true,
     });
 
     const chatWindow = blessed.box({
-      width: '90%',
-      height: '75%',
-      left: '5%',
+      width: '100%',
+      height: '70%',
+      left: '0%',
       top: '10%',
       keys: true,
       vi: true,
@@ -60,8 +57,8 @@ module.exports = {
     };
 
     const messageInput = blessed.textbox({
-      width: '90%',
-      left: '5%',
+      top: '10%',
+      width: '100%',
       top: '85%',
       keys: true,
       vi: true,
@@ -124,8 +121,8 @@ module.exports = {
     }
 
     const channelsBox = blessed.box({
-      width: '100%',
-      height: '40%',
+      width: '30%',
+      height: '100%',
       border: {
         type: 'line',
       },
@@ -138,19 +135,19 @@ module.exports = {
 
     const channelsTitle = blessed.text({
       width: '90%',
-      left: '5%',
       align: 'center',
       content: '{bold}Channels{/bold}',
       tags: true,
     });
 
     const channelList = blessed.list({
-      width: '90%',
-      height: '85%',
-      left: '5%',
+      width: 'shrink',
+      height: 'shrink',
       top: '10%',
       keys: true,
       vi: true,
+      scrollable: true,
+      alwaysScroll: true,
       search: searchChannels,
       style: {
         selected: {
@@ -162,9 +159,10 @@ module.exports = {
     });
 
     const groupsBox = blessed.box({
-      width: '100%',
-      height: '20%',
-      top: '40%',
+      width: '30%',
+      height: '100%',
+      top: '0%',
+      left: '30%',
       border: {
         type: 'line',
       },
@@ -201,9 +199,9 @@ module.exports = {
     });
 
     const usersBox = blessed.box({
-      width: '100%',
-      height: '40%',
-      top: '60%',
+      width: '30%',
+      height: '100%',
+      left: '60%',
       border: {
         type: 'line',
       },
