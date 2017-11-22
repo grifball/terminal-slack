@@ -5,7 +5,6 @@ const keyBindings = {};
 module.exports = {
   init() {
     const screen = blessed.screen({
-      autopadding: true,
       smartCSR: true,
       title: 'Slack',
       fullUnicode: true,
@@ -21,18 +20,15 @@ module.exports = {
     });
 
     const sideBar = blessed.box({
-      width: '30%',
-      height: '100%',
+      width: '100%',
+      height: '30%',
     });
 
     const mainWindow = blessed.box({
-      width: '70%',
-      height: '100%',
-      left: '30%',
+      width: '100%',
+      height: '70%',
+      top: '30%',
       // scrollable: true,
-      border: {
-        type: 'line',
-      },
       style: {
         border: {
           fg: '#888',
@@ -41,14 +37,15 @@ module.exports = {
     });
 
     const mainWindowTitle = blessed.text({
-      width: '90%',
+      height: '10%',
+      width: '100%',
       tags: true,
     });
 
     const chatWindow = blessed.box({
-      width: '90%',
-      height: '75%',
-      left: '5%',
+      width: '100%',
+      height: '70%',
+      left: '0%',
       top: '10%',
       keys: true,
       vi: true,
@@ -56,10 +53,13 @@ module.exports = {
       alwaysScroll: true,
       tags: true,
     });
+    const scrollBottom = () => {
+      chatWindow.setScroll(chatWindow.getScrollHeight());
+    };
 
     const messageInput = blessed.textbox({
-      width: '90%',
-      left: '5%',
+      top: '10%',
+      width: '100%',
       top: '85%',
       keys: true,
       vi: true,
@@ -122,8 +122,8 @@ module.exports = {
     }
 
     const channelsBox = blessed.box({
-      width: '100%',
-      height: '60%',
+      width: '30%',
+      height: '100%',
       border: {
         type: 'line',
       },
@@ -136,17 +136,57 @@ module.exports = {
 
     const channelsTitle = blessed.text({
       width: '90%',
-      left: '5%',
       align: 'center',
       content: '{bold}Channels{/bold}',
       tags: true,
     });
 
     const channelList = blessed.list({
-      width: '90%',
-      height: '85%',
-      left: '5%',
+      width: 'shrink',
+      height: 'shrink',
       top: '10%',
+      keys: true,
+      vi: true,
+      scrollable: true,
+      alwaysScroll: true,
+      search: searchChannels,
+      style: {
+        selected: {
+          bg: '#373b41',
+          fg: '#c5c8c6',
+        },
+      },
+      tags: true,
+    });
+
+    const groupsBox = blessed.box({
+      width: '30%',
+      height: '100%',
+      top: '0%',
+      left: '30%',
+      border: {
+        type: 'line',
+      },
+      style: {
+        border: {
+          fg: '#888',
+        },
+      },
+    });
+
+    const groupsTitle = blessed.text({
+      width: '90%',
+      left: '5%',
+      align: 'center',
+      content: '{bold}Groups{/bold}',
+      tags: true,
+    });
+
+    const groupList = blessed.list({
+      width: '90%',
+      height: '70%',
+      left: '5%',
+      top: '20%',
       keys: true,
       vi: true,
       search: searchChannels,
@@ -160,9 +200,9 @@ module.exports = {
     });
 
     const usersBox = blessed.box({
-      width: '100%',
-      height: '40%',
-      top: '60%',
+      width: '30%',
+      height: '100%',
+      left: '60%',
       border: {
         type: 'line',
       },
@@ -200,9 +240,12 @@ module.exports = {
 
     channelsBox.append(channelsTitle);
     channelsBox.append(channelList);
+    groupsBox.append(groupsTitle);
+    groupsBox.append(groupList);
     usersBox.append(usersTitle);
     usersBox.append(userList);
     sideBar.append(channelsBox);
+    sideBar.append(groupsBox);
     sideBar.append(usersBox);
     mainWindow.append(mainWindowTitle);
     mainWindow.append(chatWindow);
@@ -211,9 +254,10 @@ module.exports = {
     container.append(mainWindow);
     screen.append(container);
 
-    keyBindings.escape = process.exit.bind(null, 0); // esc to exit
-    keyBindings['C-c'] = channelList.focus.bind(channelList); // ctrl-c for channels
-    keyBindings['C-u'] = userList.focus.bind(userList); // ctrl-u for users
+    keyBindings.escape = process.exit.bind(null, 0);            // esc to exit
+    keyBindings['C-c'] = channelList.focus.bind(channelList);   // ctrl-c for channels
+    keyBindings['C-g'] = groupList.focus.bind(groupList);       // ctrl-g for groups
+    keyBindings['C-u'] = userList.focus.bind(userList);         // ctrl-u for users
     keyBindings['C-w'] = messageInput.focus.bind(messageInput); // ctrl-w for write
     keyBindings['C-l'] = chatWindow.focus.bind(chatWindow); // ctrl-l for message list
 
@@ -226,22 +270,12 @@ module.exports = {
 
     userList.on('keypress', callKeyBindings);
     channelList.on('keypress', callKeyBindings);
+    groupList.on('keypress', callKeyBindings);
     chatWindow.on('keypress', callKeyBindings);
     messageInput.on('keypress', (ch, key) => {
       if (Object.keys(keyBindings).includes(key.full)) {
         messageInput.cancel();
         callKeyBindings(ch, key);
-      }
-    });
-
-    // scrolling in chat window
-    chatWindow.on('keypress', (ch, key) => {
-      if (key.name === 'up') {
-        chatWindow.scroll(-1);
-        screen.render();
-      } else if (key.name === 'down') {
-        chatWindow.scroll(1);
-        screen.render();
       }
     });
 
@@ -258,6 +292,8 @@ module.exports = {
     userList.on('blur', onBlur.bind(null, usersBox));
     channelList.on('focus', onFocus.bind(null, channelsBox));
     channelList.on('blur', onBlur.bind(null, channelsBox));
+    groupList.on('focus', onFocus.bind(null, groupsBox));
+    groupList.on('blur', onBlur.bind(null, groupsBox));
     messageInput.on('focus', onFocus.bind(null, messageInput));
     messageInput.on('blur', onBlur.bind(null, messageInput));
     chatWindow.on('focus', onFocus.bind(null, mainWindow));
@@ -267,13 +303,17 @@ module.exports = {
       screen,
       usersBox,
       channelsBox,
+      groupsBox,
       usersTitle,
       userList,
       channelsTitle,
       channelList,
+      groupsTitle,
+      groupList,
       mainWindow,
       mainWindowTitle,
       chatWindow,
+      scrollBottom,
       messageInput,
     };
   },

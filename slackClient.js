@@ -32,7 +32,8 @@ function slackRequest(endpoint, query, callback) {
     const parsedData = JSON.parse(data);
     if (!parsedData.ok) {
       // can't see console.logs with blessed
-      fs.writeFileSync('error_log.txt', `Error: ${parsedData.error}`);
+      qs.token = ''; // scrub token
+      fs.writeFileSync('error_log.txt', `Error: ${data} on request ${endpoint} - ${JSON.stringify(qs)}`);
       process.exit(1);
     }
 
@@ -66,22 +67,65 @@ module.exports = {
       }
     });
   },
-  getChannelHistory(id, callback) {
-    slackRequest('channels.history', {
-      channel: id,
+  getEndpoint(channel) {
+    if (channel.id.startsWith('G')) {
+      // ID is for a group
+      return 'groups';
+    } else
+    if (channel.id.startsWith('C')) {
+      // ID is for a channel
+      return 'channels';
+    } else
+    if (channel.id.startsWith('D')) {
+      // ID is for a direct message
+      return 'im';
+    }
+    return null;
+  },
+  getChannelHistory(channel, qs, callback) {
+    fs.appendFileSync('error_log.txt', `${channel.id}\n`);
+    const endpoint = `${module.exports.getEndpoint(channel)}.history`;
+    slackRequest(endpoint,
+      qs
+    , (error, response, data) => {
+      if (callback) {
+        callback(error, response, data);
+      }
+    });
+  },
+  markChannel(channel, timestamp, callback) {
+    const endpoint = `${module.exports.getEndpoint(channel)}.mark`;
+    slackRequest(endpoint, {
+      channel: channel.id,
+      ts: timestamp,
     }, (error, response, data) => {
       if (callback) {
         callback(error, response, data);
       }
     });
   },
-  markChannel(id, timestamp, callback) {
-    slackRequest('channels.mark', {
-      channel: id,
-      ts: timestamp,
-    }, (error, response, data) => {
+  getGroups(callback) {
+    slackRequest('groups.list', {}, (error, response, data) => {
       if (callback) {
         callback(error, response, data);
+      }
+    });
+  },
+  // Modified channel.join: request group list and loop to find id for name
+  joinGroup(name, callback) {
+    slackRequest('groups.list', {}, (error, response, data) => {
+      if (callback) {
+        if (data) {
+          const groupList = JSON.parse(data);
+          groupList.groups.forEach((group) => {
+            if (group.name === name) {
+              groupList.group = group;
+              callback(error, response, JSON.stringify(groupList));
+            }
+          });
+        } else {
+          callback(error, response, data);
+        }
       }
     });
   },
@@ -92,27 +136,27 @@ module.exports = {
       }
     });
   },
-  openIm(id, callback) {
+  openIm(channel, callback) {
     slackRequest('im.open', {
-      user: id,
+      user: channel.id,
     }, (error, response, data) => {
       if (callback) {
         callback(error, response, data);
       }
     });
   },
-  getImHistory(id, callback) {
+  getImHistory(channel, callback) {
     slackRequest('im.history', {
-      channel: id,
+      channel: channel.id,
     }, (error, response, data) => {
       if (callback) {
         callback(error, response, data);
       }
     });
   },
-  markIm(id, timestamp, callback) {
+  markIm(channel, timestamp, callback) {
     slackRequest('im.mark', {
-      channel: id,
+      channel: channel.id,
       ts: timestamp,
     }, (error, response, data) => {
       if (callback) {
